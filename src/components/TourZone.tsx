@@ -3,6 +3,7 @@ import React, {
   useLayoutEffect,
   useCallback,
   useMemo,
+  useRef,
   type ComponentType,
 } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
@@ -109,6 +110,15 @@ export const TourZone: React.FC<TourZoneProps> = ({
   const isActive = currentStep === stepKey;
 
   const isScrolling = useSharedValue(false);
+  const isScrollingRef = useRef(false);
+
+  const setIsScrolling = useCallback(
+    (value: boolean) => {
+      isScrollingRef.current = value;
+      isScrolling.value = value;
+    },
+    [isScrolling]
+  );
 
   const resolvedZoneStyle: ZoneStyle = useMemo(
     () => ({
@@ -153,9 +163,9 @@ export const TourZone: React.FC<TourZoneProps> = ({
   // stale off-screen coordinates in the gap before the scroll pipeline starts.
   useLayoutEffect(() => {
     if (isActive) {
-      isScrolling.value = true;
+      setIsScrolling(true);
     }
-  }, [isActive, isScrolling]);
+  }, [isActive, setIsScrolling]);
 
   // Reads the element's final screen position and updates the overlay.
   // onComplete fires after updateStepLayout succeeds — used to fade back in
@@ -197,7 +207,7 @@ export const TourZone: React.FC<TourZoneProps> = ({
                     height,
                   });
 
-                  isScrolling.value = false;
+                  setIsScrolling(false);
                   if (onComplete) {
                     onComplete();
                   } else {
@@ -216,8 +226,8 @@ export const TourZone: React.FC<TourZoneProps> = ({
     [
       containerRef,
       isActive,
-      isScrolling,
       stepKey,
+      setIsScrolling,
       updateStepLayout,
       viewRef,
       opacity,
@@ -283,7 +293,7 @@ export const TourZone: React.FC<TourZoneProps> = ({
     let hasInitiatedScroll = false;
     let fallbackTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    isScrolling.value = true;
+    setIsScrolling(true);
 
     const checkAndScroll = (delay: number) => {
       const timeoutId = setTimeout(() => {
@@ -445,7 +455,7 @@ export const TourZone: React.FC<TourZoneProps> = ({
     stepKey,
     updateStepLayout,
     measureJS,
-    isScrolling,
+    setIsScrolling,
     registerScrollEndCallback,
     unregisterScrollEndCallback,
     opacity,
@@ -530,10 +540,10 @@ export const TourZone: React.FC<TourZoneProps> = ({
   // Sync position if the element physically resizes, but strictly avoid
   // measuring if we are currently handling an orchestrated scroll.
   const onLayout = useCallback(() => {
-    if (isActive && !isScrolling.value) {
+    if (isActive && !isScrollingRef.current) {
       measureJS();
     }
-  }, [isActive, isScrolling.value, measureJS]);
+  }, [isActive, measureJS]);
 
   useEffect(() => {
     registerStep({
