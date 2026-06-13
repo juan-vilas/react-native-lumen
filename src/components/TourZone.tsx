@@ -462,8 +462,12 @@ export const TourZone: React.FC<TourZoneProps> = ({
     backdropOpacity,
   ]);
 
-  // UI Thread tracking
-  useFrameCallback(() => {
+  // UI Thread tracking.
+  // The frame-callback worklet is memoized so it isn't re-registered on every
+  // render. A fresh worklet reference each render can re-trigger the
+  // "Reading from `value` during component render" warning under Reanimated 4
+  // because the new closure has to be (re)processed during render.
+  const frameWorklet = useCallback(() => {
     'worklet';
     if (!isActive || isScrolling.value) {
       return;
@@ -535,7 +539,21 @@ export const TourZone: React.FC<TourZoneProps> = ({
     } catch {
       // Silently ignore measurement errors on UI thread
     }
-  }, isActive);
+    // The deps include every shared value / object the worklet reads so the
+    // worklet is re-created when the user changes zone style or config, while
+    // remaining stable across unrelated re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isActive,
+    isScrolling,
+    viewRef,
+    containerRef,
+    config,
+    resolvedZoneStyle,
+    borderRadius,
+  ]);
+
+  useFrameCallback(frameWorklet, isActive);
 
   // Sync position if the element physically resizes, but strictly avoid
   // measuring if we are currently handling an orchestrated scroll.
