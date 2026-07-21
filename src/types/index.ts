@@ -355,6 +355,16 @@ export interface TourConfig {
    * @default false
    */
   enableGlow?: boolean;
+  /**
+   * If true, the highlight zone and tooltip continuously follow the target
+   * element: when the user scrolls, or when the element moves/resizes for any
+   * reason while its step is active.
+   *
+   * When false (default), the zone is positioned once when the step activates
+   * and stays there until the next step.
+   * @default false
+   */
+  followTarget?: boolean;
 }
 
 export interface TourContextType {
