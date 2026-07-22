@@ -100,6 +100,10 @@ export const TourZone: React.FC<TourZoneProps> = ({
     targetWidth,
     targetHeight,
     targetRadius,
+    scrollOffsetY,
+    followBaseTargetY,
+    followBaseScrollY,
+    followTargetActive,
     config,
     registerScrollEndCallback,
     unregisterScrollEndCallback,
@@ -166,8 +170,9 @@ export const TourZone: React.FC<TourZoneProps> = ({
   useLayoutEffect(() => {
     if (isActive) {
       setIsScrolling(true);
+      followTargetActive.value = false;
     }
-  }, [isActive, setIsScrolling]);
+  }, [isActive, setIsScrolling, followTargetActive]);
 
   // Reads the element's final screen position and updates the overlay.
   // onComplete fires after updateStepLayout succeeds — used to fade back in
@@ -534,9 +539,9 @@ export const TourZone: React.FC<TourZoneProps> = ({
 
   useFrameCallback(frameWorklet, isActive);
 
-  // Follow mode: poll the element position on the JS thread so the zone and
-  // tooltip track user scrolls and any layout movement. The UI-thread frame
-  // callback above is disabled while this owns tracking.
+  // Follow mode: the JS thread periodically re-anchors the element's accurate
+  // screen position. Scroll movement between anchors is handled below on the
+  // UI thread from the live scroll offset, avoiding 20Hz visual steps.
   useEffect(() => {
     if (!isActive || !followTarget) return;
 
@@ -590,7 +595,8 @@ export const TourZone: React.FC<TourZoneProps> = ({
               lastW = width;
               lastH = height;
 
-              // Only write when the element actually moved.
+              // Only re-anchor after real movement. Skipping the first poll
+              // lets the normal step-transition spring finish uninterrupted.
               if (!moved) return;
 
               const frame = computeZoneFrame(
@@ -602,13 +608,15 @@ export const TourZone: React.FC<TourZoneProps> = ({
                 borderRadius
               );
 
-              // Direct assignment (no spring): tracking stays 1:1
-              // with the element.
               targetX.value = frame.x;
               targetY.value = frame.y;
               targetWidth.value = frame.width;
               targetHeight.value = frame.height;
               targetRadius.value = frame.radius;
+
+              followBaseTargetY.value = frame.y;
+              followBaseScrollY.value = scrollOffsetY.value;
+              followTargetActive.value = true;
             }
           );
         }
@@ -629,6 +637,10 @@ export const TourZone: React.FC<TourZoneProps> = ({
     targetWidth,
     targetHeight,
     targetRadius,
+    followBaseTargetY,
+    followBaseScrollY,
+    followTargetActive,
+    scrollOffsetY,
   ]);
 
   // Sync position if the element physically resizes, but strictly avoid
