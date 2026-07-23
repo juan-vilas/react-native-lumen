@@ -43,11 +43,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thedev204/react-native-lumen.git"
+    "url": "git+https://github.com/juan-vilas/react-native-lumen.git"
   },
-  "author": "thedev204 <116882323+thedev204@users.noreply.github.com> (https://github.com/thedev204)",
+  "author": "juan-vilas <108366198+juan-vilas@users.noreply.github.com> (https://github.com/juan-vilas)",
   "license": "MIT",
-  "homepage": "https://thedev204.github.io/react-native-lumen/",
+  "homepage": "https://github.com/juan-vilas/react-native-lumen/",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
